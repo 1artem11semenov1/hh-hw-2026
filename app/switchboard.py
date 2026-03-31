@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from app.users import User
+from app.users import User, LocalUser, ForeignUser
 
 
 LOCAL_PHONE_PREFIX = "+7"
@@ -20,7 +20,8 @@ class ActiveCall:
 
 class Switchboard:
     def __init__(self) -> None:
-        self._active_calls: list[ActiveCall] = []
+        self._active_in_border_calls: list[ActiveCall] = []
+        self._active_cross_border_calls: list[ActiveCall] = []
 
     def register_call(self, raw_call: str) -> ActiveCall:
         '''
@@ -29,10 +30,27 @@ class Switchboard:
 
         Например: "1001,Иван Петров,+71234567890,1085,Адам Яковлев,+71255556666"
         '''
-        pass  # Удалите `pass` и пишите ваш код
+        call_info = raw_call.split(",")
+        if call_info[2].startswith(LOCAL_PHONE_PREFIX):
+            caller = LocalUser(int(call_info[0]), call_info[1], call_info[2])
+        else:
+            caller = ForeignUser(int(call_info[0]), call_info[1], call_info[2])
+        
+        if call_info[5].startswith(LOCAL_PHONE_PREFIX):
+            receiver = LocalUser(int(call_info[3]), call_info[4], call_info[5])
+        else:
+            receiver = ForeignUser(int(call_info[3]), call_info[4], call_info[5])
+        
+        call = ActiveCall(caller, receiver)
+        if (call.is_cross_border):
+            self._active_cross_border_calls.append(call)
+        else:
+            self._active_in_border_calls.append(call)
+
+        return call
 
     def get_active_calls_count(self) -> int:
-        pass  # Удалите `pass` и пишите ваш код
+        return len(self._active_cross_border_calls) + len(self._active_in_border_calls)
 
     def get_cross_border_calls_count(self) -> int:
-        pass  # Удалите `pass` и пишите ваш код
+        return len(self._active_cross_border_calls)

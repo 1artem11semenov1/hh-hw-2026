@@ -4,6 +4,32 @@ from app.switchboard import Switchboard
 from app.users import ForeignUser, LocalUser
 
 
+def test_register_call_creates_two_local_users() -> None:
+    switchboard = Switchboard()
+
+    active_call = switchboard.register_call(
+        "1,Ivan Ivanov,+79990000000,2,Petr Petrov,+79990000001"
+    )
+
+    assert isinstance(active_call.caller, LocalUser)
+    assert isinstance(active_call.receiver, LocalUser)
+    assert active_call.caller.id == 1
+    assert active_call.receiver.id == 2
+
+
+def test_register_call_creates_two_foreign_users() -> None:
+    switchboard = Switchboard()
+
+    active_call = switchboard.register_call(
+        "1,Alice Ivanova,+15551234568,2,Bob Petrov,+15551234567"
+    )
+
+    assert isinstance(active_call.caller, ForeignUser)
+    assert isinstance(active_call.receiver, ForeignUser)
+    assert active_call.caller.id == 1
+    assert active_call.receiver.id == 2
+
+
 def test_register_call_creates_local_and_foreign_users() -> None:
     switchboard = Switchboard()
 
@@ -45,3 +71,10 @@ def test_register_call_counts_calls_between_local_and_foreign_users() -> None:
 
     assert switchboard.get_active_calls_count() == 3
     assert switchboard.get_cross_border_calls_count() == 1
+
+
+def test_register_call_counts_active_calls_count_without_calls() -> None:
+    switchboard = Switchboard()
+
+    assert switchboard.get_active_calls_count() == 0
+    assert switchboard.get_cross_border_calls_count() == 0
