@@ -20,6 +20,9 @@ class ActiveCall:
 
 
 class Switchboard:
+    name_pattern = re.compile(r"^[A-Za-zА-Яа-я]+(?:[\s'-][A-Za-zА-Яа-я]+)*$")
+    number_pattern = re.compile(r"^[+][0-9]+$")
+
     def __init__(self) -> None:
         self._active_in_border_calls: list[ActiveCall] = []
         self._active_cross_border_calls: list[ActiveCall] = []
@@ -32,15 +35,13 @@ class Switchboard:
 
     def is_valid_name(self, name) -> bool:
         stripped = name.strip()
-        pattern = re.compile(r"^[A-Za-zА-Яа-я]+(?:[\s'-][A-Za-zА-Яа-я]+)*$")
         
-        return bool(stripped) and bool(pattern.match(stripped))
+        return bool(stripped) and bool(self.name_pattern.match(stripped))
 
     def is_valid_number(self, number) -> bool:
         stripped = number.strip()
-        pattern = re.compile(r"^[+][0-9]+$")
-
-        return bool(stripped) and bool(pattern.match(stripped))
+        
+        return bool(stripped) and bool(self.number_pattern.match(stripped))
 
     def is_correct_call_info(self, call_info) -> bool:
         # проверяем длину
