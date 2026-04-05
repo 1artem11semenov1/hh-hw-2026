@@ -43,6 +43,92 @@ def test_register_call_creates_local_and_foreign_users() -> None:
     assert active_call.receiver.id == 2
 
 
+def test_register_call_with_none_or_empty_returns_none() -> None:
+    switchboard = Switchboard()
+
+    active_call_none = switchboard.register_call(
+        None
+    )
+    active_call_empty = switchboard.register_call(
+        ""
+    )
+
+    assert active_call_none == None
+    assert active_call_empty == None
+    assert switchboard.get_active_calls_count() == 0
+
+
+def test_register_call_with_wrong_number_of_fields() -> None:
+    switchboard = Switchboard()
+
+    active_call_1 = switchboard.register_call(
+        "Ivan Ivanov,+79990000000,2,John Smith,+15551234567"
+    )
+    active_call_2 = switchboard.register_call(
+        "1,Ivan Ivanov,+79990000000,2,John Smith,+15551234567,3,Bob Smith,+15551234567"
+    )
+
+    assert active_call_1 == None
+    assert active_call_2 == None
+    assert switchboard.get_active_calls_count() == 0
+
+
+def test_incorrect_id_fields_in_raw_call() -> None:
+    switchboard = Switchboard()
+
+    active_call_incorrect_uid = switchboard.register_call(
+        "None,Ivan Ivanov,+79990000000,2,John Smith,+15551234567"
+    )
+    active_call_empty_uid = switchboard.register_call(
+        "1,Ivan Ivanov,+79990000000,,John Smith,+15551234567"
+    )
+
+    assert active_call_incorrect_uid == None
+    assert active_call_empty_uid == None
+    assert switchboard.get_active_calls_count() == 0
+
+
+def test_incorrect_name_fields_in_raw_call() -> None:
+    switchboard = Switchboard()
+
+    active_call_empty_name = switchboard.register_call(
+        "1,Ivan Ivanov,+79990000000,2,,+15551234567"
+    )
+    active_call_spaces_name = switchboard.register_call(
+        "1,   ,79990000000,2,John Smith,15551234567"
+    )
+
+    assert active_call_empty_name == None
+    assert active_call_spaces_name == None
+    assert switchboard.get_active_calls_count() == 0
+
+
+def test_incorrect_number_fields_in_raw_call() -> None:
+    switchboard = Switchboard()
+
+    active_call_incorrect_number = switchboard.register_call(
+        "1,Ivan Ivanov,79990000000,2,John Smith,15551234567"
+    )
+    active_call_incorrect_number_format = switchboard.register_call(
+        "1,Ivan Ivanov,+7-(999)-000-0000,2,John Smith,15551234567"
+    )
+
+    assert active_call_incorrect_number == None
+    assert active_call_incorrect_number_format == None
+    assert switchboard.get_active_calls_count() == 0
+
+
+def test_reverse_fields_in_raw_call() -> None:
+    switchboard = Switchboard()
+
+    active_call_reverse_call_data = switchboard.register_call(
+        "+79990000000,Ivan Ivanov,1,+15551234567,John Smith,2"
+    )
+
+    assert active_call_reverse_call_data == None
+    assert switchboard.get_active_calls_count() == 0
+
+
 def test_register_call_counts_active_calls() -> None:
     switchboard = Switchboard()
 

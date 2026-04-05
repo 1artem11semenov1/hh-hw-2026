@@ -22,6 +22,35 @@ class Switchboard:
     def __init__(self) -> None:
         self._active_in_border_calls: list[ActiveCall] = []
         self._active_cross_border_calls: list[ActiveCall] = []
+    
+    def create_correct_user(self, usr_data) -> User:
+        if usr_data[2].startswith(LOCAL_PHONE_PREFIX):
+            return LocalUser(int(usr_data[0]), usr_data[1], usr_data[2])
+        
+        return ForeignUser(int(usr_data[0]), usr_data[1], usr_data[2])
+
+    def is_correct_call_info(self, call_info) -> bool:
+        # проверяем длину
+        if (len(call_info) != 6):
+            return False
+        
+        # можно str -> int для id
+        try:
+            int(call_info[0])
+            int(call_info[3])
+        except:
+            return False
+        
+        # Имя не пустая строка
+        if ((not bool(call_info[1].strip())) or (not bool(call_info[4].strip()))):
+            return False
+
+        # Номер начинается с '+'
+        if ((not call_info[2].startswith('+')) or (not call_info[5].startswith('+'))):
+            return False
+        
+        return True
+        
 
     def register_call(self, raw_call: str) -> ActiveCall:
         '''
@@ -30,24 +59,23 @@ class Switchboard:
 
         Например: "1001,Иван Петров,+71234567890,1085,Адам Яковлев,+71255556666"
         '''
-        call_info = raw_call.split(",")
-        if call_info[2].startswith(LOCAL_PHONE_PREFIX):
-            caller = LocalUser(int(call_info[0]), call_info[1], call_info[2])
-        else:
-            caller = ForeignUser(int(call_info[0]), call_info[1], call_info[2])
+        if (raw_call != None):
+            call_info = raw_call.split(",")
         
-        if call_info[5].startswith(LOCAL_PHONE_PREFIX):
-            receiver = LocalUser(int(call_info[3]), call_info[4], call_info[5])
-        else:
-            receiver = ForeignUser(int(call_info[3]), call_info[4], call_info[5])
+            if (self.is_correct_call_info(call_info)):
+                caller = self.create_correct_user(call_info[:3])
         
-        call = ActiveCall(caller, receiver)
-        if (call.is_cross_border):
-            self._active_cross_border_calls.append(call)
-        else:
-            self._active_in_border_calls.append(call)
+                receiver = self.create_correct_user(call_info[3:])
 
-        return call
+                call = ActiveCall(caller, receiver)
+                if (call.is_cross_border):
+                    self._active_cross_border_calls.append(call)
+                else:
+                    self._active_in_border_calls.append(call)
+
+                return call
+        
+        return None
 
     def get_active_calls_count(self) -> int:
         return len(self._active_cross_border_calls) + len(self._active_in_border_calls)
