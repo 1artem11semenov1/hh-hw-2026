@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from app.users import User, LocalUser, ForeignUser
 
+import re
 
 LOCAL_PHONE_PREFIX = "+7"
 
@@ -23,11 +24,23 @@ class Switchboard:
         self._active_in_border_calls: list[ActiveCall] = []
         self._active_cross_border_calls: list[ActiveCall] = []
     
-    def create_correct_user(self, usr_data) -> User:
+    def create_user(self, usr_data) -> User:
         if usr_data[2].startswith(LOCAL_PHONE_PREFIX):
             return LocalUser(int(usr_data[0]), usr_data[1], usr_data[2])
         
         return ForeignUser(int(usr_data[0]), usr_data[1], usr_data[2])
+
+    def is_valid_name(self, name) -> bool:
+        stripped = name.strip()
+        pattern = re.compile(r"^[A-Za-zА-Яа-я]+(?:[\s'-][A-Za-zА-Яа-я]+)*$")
+        
+        return bool(stripped) and bool(pattern.match(stripped))
+
+    def is_valid_number(self, number) -> bool:
+        stripped = number.strip()
+        pattern = re.compile(r"^[+][0-9]+$")
+
+        return bool(stripped) and bool(pattern.match(stripped))
 
     def is_correct_call_info(self, call_info) -> bool:
         # проверяем длину
@@ -41,12 +54,12 @@ class Switchboard:
         except:
             return False
         
-        # Имя не пустая строка
-        if ((not bool(call_info[1].strip())) or (not bool(call_info[4].strip()))):
+        # Имя корректно
+        if ((not self.is_valid_name(call_info[1])) or (not self.is_valid_name(call_info[4]))):
             return False
 
-        # Номер начинается с '+'
-        if ((not call_info[2].startswith('+')) or (not call_info[5].startswith('+'))):
+        # Номер корректен
+        if ((not self.is_valid_number(call_info[2])) or (not self.is_valid_number(call_info[5]))):
             return False
         
         return True
@@ -63,9 +76,9 @@ class Switchboard:
             call_info = raw_call.split(",")
         
             if (self.is_correct_call_info(call_info)):
-                caller = self.create_correct_user(call_info[:3])
+                caller = self.create_user(call_info[:3])
         
-                receiver = self.create_correct_user(call_info[3:])
+                receiver = self.create_user(call_info[3:])
 
                 call = ActiveCall(caller, receiver)
                 if (call.is_cross_border):

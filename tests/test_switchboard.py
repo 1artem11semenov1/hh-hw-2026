@@ -21,7 +21,7 @@ def test_register_call_creates_two_foreign_users() -> None:
     switchboard = Switchboard()
 
     active_call = switchboard.register_call(
-        "1,Alice Ivanova,+15551234568,2,Bob Petrov,+15551234567"
+        "1,Alice Ivanova-Petrova,+15551234568,2,Bob O'Neil,+15551234567"
     )
 
     assert isinstance(active_call.caller, ForeignUser)
@@ -97,9 +97,17 @@ def test_incorrect_name_fields_in_raw_call() -> None:
     active_call_spaces_name = switchboard.register_call(
         "1,   ,79990000000,2,John Smith,15551234567"
     )
+    active_call_name_with_numbers = switchboard.register_call(
+        "1,John44,79990000000,2,John Smith,15551234567"
+    )
+    active_call_name_not_starts_with_letters = switchboard.register_call(
+        "1,John Smith,79990000000,2,'Bob Ivanov,15551234567"
+    )
 
     assert active_call_empty_name == None
     assert active_call_spaces_name == None
+    assert active_call_name_with_numbers == None
+    assert active_call_name_not_starts_with_letters == None
     assert switchboard.get_active_calls_count() == 0
 
 
@@ -110,11 +118,15 @@ def test_incorrect_number_fields_in_raw_call() -> None:
         "1,Ivan Ivanov,79990000000,2,John Smith,15551234567"
     )
     active_call_incorrect_number_format = switchboard.register_call(
-        "1,Ivan Ivanov,+7-(999)-000-0000,2,John Smith,15551234567"
+        "1,Ivan Ivanov,+7-(999)-000-0000,2,John Smith,+15551234567"
+    )
+    active_call_empty_number_field = switchboard.register_call(
+        "1,Ivan Ivanov,,2,John Smith,+15551234567"
     )
 
     assert active_call_incorrect_number == None
     assert active_call_incorrect_number_format == None
+    assert active_call_empty_number_field == None
     assert switchboard.get_active_calls_count() == 0
 
 
